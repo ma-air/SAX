@@ -11,6 +11,7 @@ public class Main {
 		Scanner entrada = new Scanner(System.in);
 		boolean salir = false;
 		Lista rrhh = new Lista();
+		LeerconSax leer = new LeerconSax();
 		
 		//EMPLEADO 1
 		Empleado worker1 = new Empleado();
@@ -41,7 +42,7 @@ public class Main {
 
 				System.out.print("\n0. SALIR \n" + "1. Consulta \n"
 						+ "2. Insercción \n" + "3. Modificación \n"
-						+ "4. Borrado\n" + "5. Lista General \n"
+						+ "4. Borrado\n" + "5. Lista General \n" + "6. Leer archivo con SAX"
 						+ "******ELIGE EL NUMERO DE LA PRACTICA******: ");
 
 				int opcion = entrada.nextInt();
@@ -59,6 +60,8 @@ public class Main {
 					rrhh.eliminacion();
 				} else if (opcion == 5) { 
 					rrhh.listar();
+				} else if (opcion == 6) { 
+					leer.conSax(args);
 				} else {
 					System.out.println("\nOpcion no contemplada en el menu. ");
 				}

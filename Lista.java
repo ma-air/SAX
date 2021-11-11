@@ -7,7 +7,26 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+import org.xml.sax.SAXException;
 
 public class Lista {
 
@@ -33,13 +52,142 @@ public class Lista {
 	// METODOS IMPLEMENTADOS
 	// ESCRIBIR EN FICHERO LA LISTA (IMPRIMIR)
 	public void escribirEmpleado() throws IOException {
-			
+		// CREAMOS UN DOCUMENT BUILDER HACIENDO USO DE LA FACTORIA DOCUMENT
+		// BUILDER FACTORY
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = null;
+		try {
+			builder = dbf.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// CREAMOS UN DOCUMENTO VACIO CON NOMBRE REGISTRO_EMPLEADOS Y NODO RAIZ
+		// RRHH
+		DOMImplementation implementacion = builder.getDOMImplementation();
+		Document registroEmpleados = implementacion.createDocument(null, "rrhh",
+				null);
+		// SE CREA NULO PARA QUE NO DE PROBLEMAS ENTRO DEL WHILE
+		Element nodoEmpleado = null, nodoDatos = null;
+		Text texto = null;
+		// VAMOS EMPLEADO POR EMPLEADO
+		for (Empleado empleado : lista_Empleados) {
+			// CREAMOS EL NODO EMPLEADO
+			nodoEmpleado = registroEmpleados.createElement("empleado");
+			// LE AÑADIMOS COMO HIJO DE EMPLEADOS
+			registroEmpleados.getDocumentElement().appendChild(nodoEmpleado);
+			// CREAMOS EL NODO NIF
+			nodoDatos = registroEmpleados.createElement("nif");
+			// SE AÑADE COMO HIJO DE EMPLEADO
+			nodoEmpleado.appendChild(nodoDatos);
+			texto = registroEmpleados.createTextNode(empleado.getNif());
+			nodoDatos.appendChild(texto);
+			nodoDatos = registroEmpleados.createElement("nombre");
+			nodoEmpleado.appendChild(nodoDatos);
+			texto = registroEmpleados.createTextNode(empleado.getNombre());
+			nodoDatos.appendChild(texto);
+			nodoDatos = registroEmpleados.createElement("apellidos");
+			nodoEmpleado.appendChild(nodoDatos);
+			texto = registroEmpleados.createTextNode(empleado.getApellidos());
+			nodoDatos.appendChild(texto);
+			nodoDatos = registroEmpleados.createElement("salario");
+			nodoEmpleado.appendChild(nodoDatos);
+			texto = (Text) registroEmpleados
+					.createTextNode(Double.toString(empleado.getSalario()));
+			nodoDatos.appendChild(texto);
+		}
+
+		// HAY QUE GUARDAR EL DOCUMENTO
+		// CREAR EL ORIGEN DE DATOS
+		Source origen = new DOMSource(registroEmpleados);
+		// CREAR EL RESULTADO (EL FICHERO DE DESTINO)
+		Result resultado = new StreamResult(new File("src/", "Empleados.xml"));
+		// CREAR UN TRANSFORME FACTORY
+		Transformer transformador = null;
+		try {
+			transformador = TransformerFactory.newInstance().newTransformer();
+		} catch (TransformerConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerFactoryConfigurationError e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// REALIZAR LA TRANSFORMACION
+		try {
+			transformador.transform(origen, resultado);
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
 	// LEER ARCHIVO
 	public void consultarEnLista(String nif) {
-		
+		Empleado aux = new Empleado();
+		// CREAMOS EL DOCUMENT BUILDER PARA PODER OBTENER EL DOCUEMNTO
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = null;
+		try {
+			builder = dbf.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// LEER EL DOCUMETNO DESDE EL FICHERO
+		Document registroEmpleados = null;
+		try {
+			registroEmpleados = builder
+					.parse(new File("src/", "Empleados.xml"));
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// NORMALIZAMOS EL DOCUMENTO PARA EVITAR ERRORES DE LECTURA
+		registroEmpleados.getDocumentElement().normalize();
+
+		/*
+		 * // MOSTRAMOS EL NOMBRE DEL ELEMENTO RAIZ
+		 * System.out.println("El elemento raiz es: " +
+		 * registroEmpleados.getDocumentElement().getNodeName());
+		 */
+		// CREAMOS UNA LISTA DE TODOS LOS NODODS EMPLEADO
+		NodeList empleados = registroEmpleados.getElementsByTagName("empleado");
+		/*
+		 * // MOSTRAMOS EL NUMERO DE ELEMENTOS EMPLEADO QUE HEMOS ENCONTRADO
+		 * System.out.println( "Se han econtrado " + empleados.getLength() +
+		 * "empleados");
+		 */
+
+		// RECORREMOS LA LISTA
+		for (int i = 0; i < lista_Empleados.size(); i++) {
+			// OBTENEMOS EL PRIMER NODO DE LA LISTA
+			Node emple = empleados.item(i);
+			// EN CASO DE QUE ESE NODO SEA UN ELEMENTO
+			if (emple.getNodeType() == Node.ELEMENT_NODE) {
+				// CREAMOS EL ELEMENTO EMPLEADO Y LEERMOS SU INFORMACION
+				Element empleado = (Element) emple;
+				String dni = empleado.getElementsByTagName("nif").item(0)
+						.getTextContent();
+				aux.setNif(dni);
+				String name = empleado.getElementsByTagName("nombre").item(0)
+						.getTextContent();
+				aux.setNombre(name);
+				String surname = empleado.getElementsByTagName("apellidos")
+						.item(0).getTextContent();
+				aux.setApellidos(surname);
+				String wage = empleado.getElementsByTagName("salario").item(0)
+						.getTextContent();
+				aux.setSalario(Double.parseDouble(wage));
+				if (dni.equals(nif)) {
+					System.out.println(aux.toString());
+				}
+			}
+		}
 	}
 
 	public void conultar() {
@@ -196,7 +344,72 @@ public class Lista {
 
 	// BORRAR EMPLEADO
 	public void borrar(String nif) throws IOException {
+		Empleado aux = new Empleado();
+		// CREAMOS EL DOCUMENT BUILDER PARA PODER OBTENER EL DOCUEMNTO
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = null;
+		try {
+			builder = dbf.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// LEER EL DOCUMETNO DESDE EL FICHERO
+		Document registroEmpleados = null;
+		try {
+			registroEmpleados = builder
+					.parse(new File("src/", "Empleados.xml"));
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// NORMALIZAMOS EL DOCUMENTO PARA EVITAR ERRORES DE LECTURA
+		registroEmpleados.getDocumentElement().normalize();
 
+		/*
+		 * // MOSTRAMOS EL NOMBRE DEL ELEMENTO RAIZ
+		 * System.out.println("El elemento raiz es: " +
+		 * registroEmpleados.getDocumentElement().getNodeName());
+		 */
+		// CREAMOS UNA LISTA DE TODOS LOS NODODS EMPLEADO
+		NodeList empleados = registroEmpleados.getElementsByTagName("empleado");
+		/*
+		 * // MOSTRAMOS EL NUMERO DE ELEMENTOS EMPLEADO QUE HEMOS ENCONTRADO
+		 * System.out.println( "Se han econtrado " + empleados.getLength() +
+		 * "empleados");
+		 */
+
+		// RECORREMOS LA LISTA
+		for (int i = 0; i < lista_Empleados.size(); i++) {
+			// OBTENEMOS EL PRIMER NODO DE LA LISTA
+			Node emple = empleados.item(i);
+			// EN CASO DE QUE ESE NODO SEA UN ELEMENTO
+			if (emple.getNodeType() == Node.ELEMENT_NODE) {
+				// CREAMOS EL ELEMENTO EMPLEADO Y LEERMOS SU INFORMACION
+				Element empleado = (Element) emple;
+				String dni = empleado.getElementsByTagName("nif").item(0)
+						.getTextContent();
+				aux.setNif(dni);
+				String name = empleado.getElementsByTagName("nombre").item(0)
+						.getTextContent();
+				aux.setNombre(name);
+				String surname = empleado.getElementsByTagName("apellidos")
+						.item(0).getTextContent();
+				aux.setApellidos(surname);
+				String wage = empleado.getElementsByTagName("salario").item(0)
+						.getTextContent();
+				aux.setSalario(Double.parseDouble(wage));
+				if (dni.equals(nif)) {
+					System.out.println(
+							"empleado a eliminar: \n" + aux.toString());
+					lista_Empleados.remove(i);
+					escribirEmpleado();
+				}
+			}
+		}
 
 	}
 
@@ -224,5 +437,75 @@ public class Lista {
 
 	// MODIFICAR EMPLEADO
 	public void modificar(String nif) throws IOException {
+		Scanner entrada = new Scanner(System.in);
+		Empleado aux = new Empleado();
+		// CREAMOS EL DOCUMENT BUILDER PARA PODER OBTENER EL DOCUEMNTO
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = null;
+		try {
+			builder = dbf.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// LEER EL DOCUMETNO DESDE EL FICHERO
+		Document registroEmpleados = null;
+		try {
+			registroEmpleados = builder
+					.parse(new File("src/", "Empleados.xml"));
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// NORMALIZAMOS EL DOCUMENTO PARA EVITAR ERRORES DE LECTURA
+		registroEmpleados.getDocumentElement().normalize();
+
+		/*
+		 * // MOSTRAMOS EL NOMBRE DEL ELEMENTO RAIZ
+		 * System.out.println("El elemento raiz es: " +
+		 * registroEmpleados.getDocumentElement().getNodeName());
+		 */
+		// CREAMOS UNA LISTA DE TODOS LOS NODODS EMPLEADO
+		NodeList empleados = registroEmpleados.getElementsByTagName("empleado");
+		/*
+		 * // MOSTRAMOS EL NUMERO DE ELEMENTOS EMPLEADO QUE HEMOS ENCONTRADO
+		 * System.out.println( "Se han econtrado " + empleados.getLength() +
+		 * "empleados");
+		 */
+
+		// RECORREMOS LA LISTA
+		for (int i = 0; i < lista_Empleados.size(); i++) {
+			// OBTENEMOS EL PRIMER NODO DE LA LISTA
+			Node emple = empleados.item(i);
+			// EN CASO DE QUE ESE NODO SEA UN ELEMENTO
+			if (emple.getNodeType() == Node.ELEMENT_NODE) {
+				// CREAMOS EL ELEMENTO EMPLEADO Y LEERMOS SU INFORMACION
+				Element empleado = (Element) emple;
+				String dni = empleado.getElementsByTagName("nif").item(0)
+						.getTextContent();
+				aux.setNif(dni);
+				String name = empleado.getElementsByTagName("nombre").item(0)
+						.getTextContent();
+				aux.setNombre(name);
+				String surname = empleado.getElementsByTagName("apellidos")
+						.item(0).getTextContent();
+				aux.setApellidos(surname);
+				String wage = empleado.getElementsByTagName("salario").item(0)
+						.getTextContent();
+				aux.setSalario(Double.parseDouble(wage));
+				if (dni.equals(nif)) {
+					System.out.println(
+							"empleado a modificar: \n" + aux.toString());
+					System.out.print("A cuanto aumenta su salario: ");
+					double wages = entrada.nextDouble();
+					aux.setSalario(wages);
+					lista_Empleados.get(i).setSalario(wages);
+					escribirEmpleado();
+				}
+			}
+		}
 	}
 }
